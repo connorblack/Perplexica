@@ -1,6 +1,6 @@
 general:
   # Debug mode, only for development. Is overwritten by ${SEARXNG_DEBUG}
-  debug: false
+  debug: true
   # displayed name
   instance_name: 'searxng'
   # For example: https://example.com/privacy
@@ -34,7 +34,7 @@ search:
   # by default.
   autocomplete: 'google'
   # minimun characters to type before autocompleter starts
-  autocomplete_min: 4
+  autocomplete_min: 15
   # Default search language - leave blank to detect from browser information or
   # use codes from 'languages.py'
   default_lang: 'auto'
@@ -71,6 +71,7 @@ search:
   formats:
     - html
     - json
+    - csv
 
 server:
   # Is overwritten by ${SEARXNG_PORT} and ${SEARXNG_BIND_ADDRESS}
@@ -92,7 +93,7 @@ server:
   http_protocol_version: '1.0'
   # POST queries are more secure as they don't show up in history but may cause
   # problems when using Firefox containers
-  method: 'POST'
+  method: 'GET'
   default_http_headers:
     X-Content-Type-Options: nosniff
     X-Download-Options: noopen
@@ -161,7 +162,7 @@ ui:
 #
 outgoing:
   # default timeout in seconds, can be override by engine
-  request_timeout: 3.0
+  request_timeout: 5.0
   # the maximum timeout in seconds
   # max_request_timeout: 10.0
   # suffix of searx_useragent, could contain information like an email address
@@ -213,11 +214,11 @@ outgoing:
 
 # Comment or un-comment plugin to activate / deactivate by default.
 #
-# enabled_plugins:
-#   # these plugins are enabled if nothing is configured ..
-#   - 'Hash plugin'
-#   - 'Self Information'
-#   - 'Tracker URL remover'
+enabled_plugins:
+  # these plugins are enabled if nothing is configured ..
+  - 'Hash plugin'
+  - 'Self Information'
+  - 'Tracker URL remover'
 #   - 'Ahmia blacklist'  # activation depends on outgoing.using_tor_proxy
 #   # these plugins are disabled if nothing is configured ..
 #   - 'Hostname replace'  # see hostname_replace configuration below
@@ -293,10 +294,10 @@ categories_as_tabs:
   images:
   videos:
   news:
-  map:
-  music:
-  it:
-  science:
+  # map:
+  # music:
+  # it:
+  # science:
   files:
   social media:
 
@@ -336,6 +337,7 @@ engines:
     categories: onions
     enable_http: true
     shortcut: ah
+    disabled: true
 
   - name: anaconda
     engine: xpath
@@ -354,6 +356,7 @@ engines:
   - name: arch linux wiki
     engine: archlinux
     shortcut: al
+    disabled: true
 
   - name: artic
     engine: artic
@@ -379,6 +382,7 @@ engines:
     engine: bandcamp
     shortcut: bc
     categories: music
+    disabled: true
 
   - name: wikipedia
     engine: wikipedia
@@ -396,7 +400,7 @@ engines:
   - name: bing
     engine: bing
     shortcut: bi
-    disabled: true
+    # disabled: true
 
   - name: bing images
     engine: bing_images
@@ -464,10 +468,12 @@ engines:
     engine: openverse
     categories: images
     shortcut: opv
+    disabled: true
 
   - name: chefkoch
     engine: chefkoch
     shortcut: chef
+    disabled: true
     # to show premium or plus results too:
     # skip_premium: false
 
@@ -503,21 +509,21 @@ engines:
     shortcut: yep
     categories: general
     search_type: web
-    disabled: true
+    # disabled: true
 
   - name: yep images
     engine: yep
     shortcut: yepi
     categories: images
     search_type: images
-    disabled: true
+    # disabled: true
 
   - name: yep news
     engine: yep
     shortcut: yepn
     categories: news
     search_type: news
-    disabled: true
+    # disabled: true
 
   - name: curlie
     engine: xpath
@@ -575,12 +581,13 @@ engines:
     engine: deviantart
     shortcut: da
     timeout: 3.0
+    disabled: true
 
   - name: ddg definitions
     engine: duckduckgo_definitions
     shortcut: ddd
     weight: 2
-    disabled: true
+    # disabled: true
     tests: *tests_infobox
 
   # cloudflare protected
@@ -594,6 +601,7 @@ engines:
     engine: docker_hub
     shortcut: dh
     categories: [it, packages]
+    disabled: true
 
   - name: erowid
     engine: xpath
@@ -606,7 +614,7 @@ engines:
     content_xpath: //dl[@class="results-list"]/dd[@class="result-details"]
     categories: []
     shortcut: ew
-    disabled: true
+    # disabled: true
     about:
       website: https://www.erowid.org/
       wikidata_id: Q1430691
@@ -648,21 +656,21 @@ engines:
     categories: [images, web]
     ddg_category: images
     shortcut: ddi
-    disabled: true
+    # disabled: true
 
   - name: duckduckgo videos
     engine: duckduckgo_extra
     categories: [videos, web]
     ddg_category: videos
     shortcut: ddv
-    disabled: true
+    # disabled: true
 
   - name: duckduckgo news
     engine: duckduckgo_extra
     categories: [news, web]
     ddg_category: news
     shortcut: ddn
-    disabled: true
+    # disabled: true
 
   - name: duckduckgo weather
     engine: duckduckgo_weather
@@ -705,12 +713,12 @@ engines:
       require_api_key: false
       results: HTML
 
-  # - name: ebay
-  #   engine: ebay
-  #   shortcut: eb
-  #   base_url: 'https://www.ebay.com'
-  #   disabled: true
-  #   timeout: 5
+  - name: ebay
+    engine: ebay
+    shortcut: eb
+    base_url: 'https://www.ebay.com'
+    disabled: true
+    timeout: 5
 
   - name: 1x
     engine: www1x
@@ -767,11 +775,13 @@ engines:
   - name: genius
     engine: genius
     shortcut: gen
+    disabled: true
 
   - name: gentoo
     engine: gentoo
     shortcut: ge
     timeout: 10.0
+    disabled: true
 
   - name: gitlab
     engine: json_engine
@@ -822,7 +832,7 @@ engines:
     engine: goodreads
     shortcut: good
     timeout: 4.0
-    disabled: true
+    # disabled: true
 
   - name: google
     engine: google
@@ -992,29 +1002,34 @@ engines:
       - https://kat.am
     shortcut: kc
     timeout: 4.0
+    disabled: true
 
   - name: lemmy communities
     engine: lemmy
     lemmy_type: Communities
     shortcut: leco
+    disabled: true
 
   - name: lemmy users
     engine: lemmy
     network: lemmy communities
     lemmy_type: Users
     shortcut: leus
+    disabled: true
 
   - name: lemmy posts
     engine: lemmy
     network: lemmy communities
     lemmy_type: Posts
     shortcut: lepo
+    disabled: true
 
   - name: lemmy comments
     engine: lemmy
     network: lemmy communities
     lemmy_type: Comments
     shortcut: lecom
+    disabled: true
 
   - name: library genesis
     engine: xpath
@@ -1040,17 +1055,20 @@ engines:
     shortcut: zlib
     categories: files
     timeout: 7.0
+    disabled: true
 
   - name: library of congress
     engine: loc
     shortcut: loc
     categories: images
+    disabled: true
 
   - name: lingva
     engine: lingva
     shortcut: lv
     # set lingva instance in url, by default it will use the official instance
     # url: https://lingva.thedaviddelta.com
+    disabled: true
 
   - name: lobste.rs
     engine: xpath
@@ -1125,6 +1143,7 @@ engines:
   - name: mixcloud
     engine: mixcloud
     shortcut: mc
+    disabled: true
 
   # MongoDB engine
   # Required dependency: pymongo
@@ -1185,6 +1204,7 @@ engines:
     disabled: true
 
   - name: mankier
+    disabled: true
     engine: json_engine
     search_url: https://www.mankier.com/api/v2/mans/?q={query}
     results_query: results
@@ -1253,6 +1273,7 @@ engines:
   - name: openstreetmap
     engine: openstreetmap
     shortcut: osm
+    disabled: true
 
   - name: openrepos
     engine: xpath
@@ -1296,12 +1317,14 @@ engines:
   - name: pdbe
     engine: pdbe
     shortcut: pdb
+    disabled: true
     # Hide obsolete PDB entries.  Default is not to hide obsolete structures
     #  hide_obsolete: false
 
   - name: photon
     engine: photon
     shortcut: ph
+    disabled: true
 
   - name: pinterest
     engine: pinterest
@@ -1313,6 +1336,7 @@ engines:
     categories: videos
     piped_filter: videos
     timeout: 3.0
+    disabled: true
 
     # URL to use as link and for embeds
     frontend_url: https://srv.piped.video
@@ -1329,6 +1353,7 @@ engines:
     categories: music
     piped_filter: music_songs
     timeout: 3.0
+    disabled: true
 
   - name: piratebay
     engine: piratebay
@@ -1337,10 +1362,12 @@ engines:
     # country
     url: https://thepiratebay.org/
     timeout: 3.0
+    disabled: true
 
   - name: podcastindex
     engine: podcastindex
     shortcut: podcast
+    disabled: true
 
   # Required dependency: psychopg2
   #  - name: postgresql
@@ -1431,14 +1458,17 @@ engines:
       use_official_api: false
       require_api_key: false
       results: HTML
+    disabled: true
 
   - name: qwant
     qwant_categ: web
     engine: qwant
     shortcut: qw
     categories: [general, web]
+
     additional_tests:
       rosebud: *test_rosebud
+    disabled: true
 
   - name: qwant news
     qwant_categ: news
@@ -1446,6 +1476,7 @@ engines:
     shortcut: qwn
     categories: news
     network: qwant
+    disabled: true
 
   - name: qwant images
     qwant_categ: images
@@ -1453,6 +1484,7 @@ engines:
     shortcut: qwi
     categories: [images, web]
     network: qwant
+    disabled: true
 
   - name: qwant videos
     qwant_categ: videos
@@ -1460,32 +1492,34 @@ engines:
     shortcut: qwv
     categories: [videos, web]
     network: qwant
+    disabled: true
 
-  # - name: library
-  #   engine: recoll
-  #   shortcut: lib
-  #   base_url: 'https://recoll.example.org/'
-  #   search_dir: ''
-  #   mount_prefix: /export
-  #   dl_prefix: 'https://download.example.org'
-  #   timeout: 30.0
-  #   categories: files
-  #   disabled: true
+  - name: library
+    engine: recoll
+    shortcut: lib
+    base_url: 'https://recoll.example.org/'
+    search_dir: ''
+    mount_prefix: /export
+    dl_prefix: 'https://download.example.org'
+    timeout: 30.0
+    categories: files
+    disabled: true
 
-  # - name: recoll library reference
-  #   engine: recoll
-  #   base_url: 'https://recoll.example.org/'
-  #   search_dir: reference
-  #   mount_prefix: /export
-  #   dl_prefix: 'https://download.example.org'
-  #   shortcut: libr
-  #   timeout: 30.0
-  #   categories: files
-  #   disabled: true
+  - name: recoll library reference
+    engine: recoll
+    base_url: 'https://recoll.example.org/'
+    search_dir: reference
+    mount_prefix: /export
+    dl_prefix: 'https://download.example.org'
+    shortcut: libr
+    timeout: 30.0
+    categories: files
+    disabled: true
 
   - name: radio browser
     engine: radio_browser
     shortcut: rb
+    disabled: true
 
   - name: reddit
     engine: reddit
@@ -1517,22 +1551,26 @@ engines:
   - name: sepiasearch
     engine: sepiasearch
     shortcut: sep
+    disabled: true
 
   - name: soundcloud
     engine: soundcloud
     shortcut: sc
+    disabled: true
 
   - name: stackoverflow
     engine: stackexchange
     shortcut: st
     api_site: 'stackoverflow'
     categories: [it, q&a]
+    disabled: true
 
   - name: askubuntu
     engine: stackexchange
     shortcut: ubuntu
     api_site: 'askubuntu'
     categories: [it, q&a]
+    disabled: true
 
   - name: internetarchivescholar
     engine: internet_archive_scholar
@@ -1544,6 +1582,7 @@ engines:
     shortcut: su
     api_site: 'superuser'
     categories: [it, q&a]
+    disabled: true
 
   - name: searchcode code
     engine: searchcode_code
@@ -1610,6 +1649,7 @@ engines:
     base_url:
       - https://solidtorrents.to
       - https://bitsearch.to
+    disabled: true
 
   # For this demo of the sqlite engine download:
   #   https://liste.mediathekview.de/filmliste-v2.db.bz2
@@ -1663,6 +1703,7 @@ engines:
     categories: onions
     enable_http: true
     shortcut: tch
+    disabled: true
 
   # torznab engine lets you query any torznab compatible indexer.  Using this
   # engine in combination with Jackett opens the possibility to query a lot of
@@ -1705,7 +1746,7 @@ engines:
   - name: yahoo
     engine: yahoo
     shortcut: yh
-    disabled: true
+    # disabled: true
 
   - name: yahoo news
     engine: yahoo_news
@@ -1716,11 +1757,11 @@ engines:
     # You can use the engine using the official stable API, but you need an API
     # key See: https://console.developers.google.com/project
     #
-    # engine: youtube_api
-    # api_key: 'apikey' # required!
+    engine: youtube_api
+    api_key: 'AIzaSyD08UfSHQjUOZ_1XVp7x-w0am6xMZS8KuM' # required!
     #
     # Or you can use the html non-stable engine, activated by default
-    engine: youtube_noapi
+    # engine: youtube_noapi
 
   - name: dailymotion
     engine: dailymotion
@@ -1884,6 +1925,7 @@ engines:
     engine: translated
     shortcut: tl
     timeout: 5.0
+    disabled: true
     # You can use without an API key, but you are limited to 1000 words/day
     # See: https://mymemory.translated.net/doc/usagelimits.php
     # api_key: ''
@@ -2118,6 +2160,7 @@ engines:
     engine: wallhaven
     # api_key: abcdefghijklmnopqrstuvwxyz
     shortcut: wh
+    disabled: true
 
     # wikimini: online encyclopedia for children
     # The fulltext and title parameter is necessary for Wikimini because
@@ -2143,6 +2186,7 @@ engines:
     engine: wttr
     shortcut: wttr
     timeout: 9.0
+    disabled: true
 
   - name: yummly
     engine: yummly
@@ -2249,6 +2293,7 @@ engines:
   - name: bt4g
     engine: bt4g
     shortcut: bt4g
+    disabled: true
 
   - name: pkg.go.dev
     engine: xpath

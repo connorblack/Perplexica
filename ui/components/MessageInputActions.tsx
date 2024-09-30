@@ -53,10 +53,11 @@ const focusModes = [
     title: 'Youtube',
     description: 'Search and watch videos',
     icon: (
+      // @ts-ignore
       <SiYoutube
         className="h-5 w-auto mr-0.5"
-        onPointerEnterCapture={undefined}
-        onPointerLeaveCapture={undefined}
+        // onPointerEnterCapture={undefined}
+        // onPointerLeaveCapture={undefined}
       />
     ),
   },
@@ -65,10 +66,11 @@ const focusModes = [
     title: 'Reddit',
     description: 'Search for discussions and opinions',
     icon: (
+      // @ts-ignore
       <SiReddit
         className="h-5 w-auto mr-0.5"
-        onPointerEnterCapture={undefined}
-        onPointerLeaveCapture={undefined}
+        // onPointerEnterCapture={undefined}
+        // onPointerLeaveCapture={undefined}
       />
     ),
   },
