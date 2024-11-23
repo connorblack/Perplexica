@@ -13,10 +13,10 @@ type Image = {
 
 const SearchImages = ({
   query,
-  chat_history,
+  chatHistory,
 }: {
   query: string;
-  chat_history: Message[];
+  chatHistory: Message[];
 }) => {
   const [images, setImages] = useState<Image[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -33,6 +33,9 @@ const SearchImages = ({
             const chatModelProvider = localStorage.getItem('chatModelProvider');
             const chatModel = localStorage.getItem('chatModel');
 
+            const customOpenAIBaseURL = localStorage.getItem('openAIBaseURL');
+            const customOpenAIKey = localStorage.getItem('openAIApiKey');
+
             const res = await fetch(
               `${process.env.NEXT_PUBLIC_API_URL}/images`,
               {
@@ -42,16 +45,22 @@ const SearchImages = ({
                 },
                 body: JSON.stringify({
                   query: query,
-                  chat_history: chat_history,
-                  chat_model_provider: chatModelProvider,
-                  chat_model: chatModel,
+                  chatHistory: chatHistory,
+                  chatModel: {
+                    provider: chatModelProvider,
+                    model: chatModel,
+                    ...(chatModelProvider === 'custom_openai' && {
+                      customOpenAIBaseURL: customOpenAIBaseURL,
+                      customOpenAIKey: customOpenAIKey,
+                    }),
+                  },
                 }),
               },
             );
 
             const data = await res.json();
 
-            const images = data.images;
+            const images = data.images ?? [];
             setImages(images);
             setSlides(
               images.map((image: Image) => {
@@ -62,7 +71,7 @@ const SearchImages = ({
             );
             setLoading(false);
           }}
-          className="border border-dashed border-[#1C1C1C] hover:bg-[#1c1c1c] active:scale-95 duration-200 transition px-4 py-2 flex flex-row items-center justify-between rounded-lg text-white text-sm w-full"
+          className="border border-dashed border-light-200 dark:border-dark-200 hover:bg-light-200 dark:hover:bg-dark-200 active:scale-95 duration-200 transition px-4 py-2 flex flex-row items-center justify-between rounded-lg dark:text-white text-sm w-full"
         >
           <div className="flex flex-row items-center space-x-2">
             <ImagesIcon size={17} />
@@ -76,7 +85,7 @@ const SearchImages = ({
           {[...Array(4)].map((_, i) => (
             <div
               key={i}
-              className="bg-[#1C1C1C] h-32 w-full rounded-lg animate-pulse aspect-video object-cover"
+              className="bg-light-secondary dark:bg-dark-secondary h-32 w-full rounded-lg animate-pulse aspect-video object-cover"
             />
           ))}
         </div>
@@ -120,7 +129,7 @@ const SearchImages = ({
             {images.length > 4 && (
               <button
                 onClick={() => setOpen(true)}
-                className="bg-[#111111] hover:bg-[#1c1c1c] transition duration-200 active:scale-95 hover:scale-[1.02] h-auto w-full rounded-lg flex flex-col justify-between text-white p-2"
+                className="bg-light-100 hover:bg-light-200 dark:bg-dark-100 dark:hover:bg-dark-200 transition duration-200 active:scale-95 hover:scale-[1.02] h-auto w-full rounded-lg flex flex-col justify-between text-white p-2"
               >
                 <div className="flex flex-row items-center space-x-1">
                   {images.slice(3, 6).map((image, i) => (
@@ -132,7 +141,7 @@ const SearchImages = ({
                     />
                   ))}
                 </div>
-                <p className="text-white/70 text-xs">
+                <p className="text-black/70 dark:text-white/70 text-xs">
                   View {images.length - 3} more
                 </p>
               </button>

@@ -6,7 +6,11 @@ const computeSimilarity = (x: number[], y: number[]): number => {
   const similarityMeasure = getSimilarityMeasure();
 
   if (similarityMeasure === 'cosine') {
-    return cosineSimilarity(x, y);
+    const similarity = cosineSimilarity(x, y);
+    if (similarity === null) {
+      throw new Error('Cosine similarity returned null');
+    }
+    return similarity;
   } else if (similarityMeasure === 'dot') {
     return dot(x, y);
   }

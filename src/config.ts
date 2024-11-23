@@ -8,10 +8,12 @@ interface Config {
   GENERAL: {
     PORT: number;
     SIMILARITY_MEASURE: string;
+    KEEP_ALIVE: string;
   };
   API_KEYS: {
     OPENAI: string;
     GROQ: string;
+    ANTHROPIC: string;
   };
   API_ENDPOINTS: {
     SEARXNG: string;
@@ -33,11 +35,18 @@ export const getPort = () => loadConfig().GENERAL.PORT;
 export const getSimilarityMeasure = () =>
   loadConfig().GENERAL.SIMILARITY_MEASURE;
 
+console.log('Config loaded', loadConfig());
+
+export const getKeepAlive = () => loadConfig().GENERAL.KEEP_ALIVE;
+
 export const getOpenaiApiKey = () => loadConfig().API_KEYS.OPENAI;
 
 export const getGroqApiKey = () => loadConfig().API_KEYS.GROQ;
 
-export const getSearxngApiEndpoint = () => loadConfig().API_ENDPOINTS.SEARXNG;
+export const getAnthropicApiKey = () => loadConfig().API_KEYS.ANTHROPIC;
+
+export const getSearxngApiEndpoint = () =>
+  process.env.SEARXNG_API_URL || loadConfig().API_ENDPOINTS.SEARXNG;
 
 export const getOllamaApiEndpoint = () => loadConfig().API_ENDPOINTS.OLLAMA;
 
@@ -45,20 +54,33 @@ export const updateConfig = (config: RecursivePartial<Config>) => {
   const currentConfig = loadConfig();
 
   for (const key in currentConfig) {
-    if (!config[key]) config[key] = {};
+    const currentConfigKey = key as keyof Config;
+    if (!config[currentConfigKey]) config[currentConfigKey] = {};
 
-    if (typeof currentConfig[key] === 'object' && currentConfig[key] !== null) {
-      for (const nestedKey in currentConfig[key]) {
+    if (
+      typeof currentConfig[currentConfigKey] === 'object' &&
+      currentConfig[currentConfigKey] !== null
+    ) {
+      for (const nestedKey in currentConfig[currentConfigKey]) {
+        const nestedConfig = currentConfig[currentConfigKey] as Record<
+          string,
+          any
+        >;
+        const nestedUpdate = config[currentConfigKey] as Record<string, any>;
+
         if (
-          !config[key][nestedKey] &&
-          currentConfig[key][nestedKey] &&
-          config[key][nestedKey] !== ''
+          !nestedUpdate[nestedKey] &&
+          nestedConfig[nestedKey] &&
+          nestedUpdate[nestedKey] !== ''
         ) {
-          config[key][nestedKey] = currentConfig[key][nestedKey];
+          nestedUpdate[nestedKey] = nestedConfig[nestedKey];
         }
       }
-    } else if (currentConfig[key] && config[key] !== '') {
-      config[key] = currentConfig[key];
+    } else if (
+      currentConfig[currentConfigKey] !== undefined &&
+      config[currentConfigKey] === undefined
+    ) {
+      config[currentConfigKey] = currentConfig[currentConfigKey];
     }
   }
 

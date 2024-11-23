@@ -11,7 +11,7 @@ const port = getPort();
 const app = express();
 const server = http.createServer(app);
 
-const corsOptions = {
+const corsOptions: cors.CorsOptions = {
   origin: '*',
 };
 
@@ -20,6 +20,7 @@ app.use(express.json());
 
 app.use('/api', routes);
 app.get('/api', (_, res) => {
+  logger.info('API endpoint hit');
   res.status(200).json({ status: 'ok' });
 });
 
@@ -28,3 +29,11 @@ server.listen(port, () => {
 });
 
 startWebSocketServer(server);
+
+process.on('uncaughtException', (err, origin) => {
+  logger.error(`Uncaught Exception at ${origin}: ${err}`);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error(`Unhandled Rejection at: ${promise}, reason: ${reason}`);
+});

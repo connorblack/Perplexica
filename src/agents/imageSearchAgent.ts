@@ -56,7 +56,7 @@ const createImageSearchChain = (llm: BaseChatModel) => {
         engines: ['bing images', 'google images'],
       });
 
-      const images = [];
+      const images: { img_src: string; url: string; title: string }[] = [];
 
       res.results.forEach((result) => {
         if (result.img_src && result.url && result.title) {

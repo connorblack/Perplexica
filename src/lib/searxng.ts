@@ -23,25 +23,35 @@ export const searchSearxng = async (
   query: string,
   opts?: SearxngSearchOptions,
 ) => {
-  const searxngURL = getSearxngApiEndpoint();
+  try {
+    const searxngURL = getSearxngApiEndpoint();
+    console.log('SearxngURL', searxngURL);
 
-  const url = new URL(`${searxngURL}/search?format=json`);
-  url.searchParams.append('q', query);
+    const url = new URL(`${searxngURL}/search?format=json`);
+    url.searchParams.append('q', query);
 
-  if (opts) {
-    Object.keys(opts).forEach((key) => {
-      if (Array.isArray(opts[key])) {
-        url.searchParams.append(key, opts[key].join(','));
-        return;
-      }
-      url.searchParams.append(key, opts[key]);
-    });
+    if (opts) {
+      Object.entries(opts).forEach(([key, value]) => {
+        if (Array.isArray(value)) {
+          url.searchParams.append(key, value.join(','));
+        } else if (value !== undefined) {
+          url.searchParams.append(key, String(value));
+        }
+      });
+    }
+
+    const res = await axios.get(url.toString());
+
+    if (res.status !== 200) {
+      throw new Error(`Error fetching data: ${res.statusText}`);
+    }
+
+    const results: SearxngSearchResult[] = res.data.results || [];
+    const suggestions: string[] = res.data.suggestions || [];
+
+    return { results, suggestions };
+  } catch (error) {
+    console.error('Error in searchSearxng:', error);
+    return { results: [], suggestions: [] };
   }
-
-  const res = await axios.get(url.toString());
-
-  const results: SearxngSearchResult[] = res.data.results;
-  const suggestions: string[] = res.data.suggestions;
-
-  return { results, suggestions };
 };

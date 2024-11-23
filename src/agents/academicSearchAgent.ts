@@ -19,6 +19,7 @@ import formatChatHistoryAsString from '../utils/formatHistory';
 import eventEmitter from 'events';
 import computeSimilarity from '../utils/computeSimilarity';
 import logger from '../utils/logger';
+import { IterableReadableStream } from '@langchain/core/utils/stream';
 
 const basicAcademicSearchRetrieverPrompt = `
 You will be given a conversation below and a follow up question. You need to rephrase the follow-up question if needed so it is a standalone question that can be used by the LLM to search the web for information.
@@ -44,7 +45,7 @@ Rephrased question:
 const basicAcademicSearchResponsePrompt = `
     You are Perplexica, an AI model who is expert at searching the web and answering user's queries. You are set on focus mode 'Academic', this means you will be searching for academic papers and articles on the web.
 
-    Generate a response that is informative and relevant to the user's query based on provided context (the context consits of search results containg a brief description of the content of that page).
+    Generate a response that is informative and relevant to the user's query based on provided context (the context consits of search results containing a brief description of the content of that page).
     You must use this context to answer the user's query in the best way possible. Use an unbaised and journalistic tone in your response. Do not repeat the text.
     You must not tell the user to open any link or visit any website to get the answer. You must provide the answer in the response itself. If the user asks for links you can provide them.
     Your responses should be medium to long in length be informative and relevant to the user's query. You can use markdowns to format your response. You should use bullet points to list the information. Make sure the answer is not short and is informative.
@@ -52,8 +53,8 @@ const basicAcademicSearchResponsePrompt = `
     Place these citations at the end of that particular sentence. You can cite the same sentence multiple times if it is relevant to the user's query like [number1][number2].
     However you do not need to cite it using the same number. You can use different numbers to cite the same sentence multiple times. The number refers to the number of the search result (passed in the context) used to generate that part of the answer.
 
-    Aything inside the following \`context\` HTML block provided below is for your knowledge returned by the search engine and is not shared by the user. You have to answer question on the basis of it and cite the relevant information from it but you do not have to 
-    talk about the context in your response. 
+    Anything inside the following \`context\` HTML block provided below is for your knowledge returned by the search engine and is not shared by the user. You have to answer question on the basis of it and cite the relevant information from it but you do not have to
+    talk about the context in your response.
 
     <context>
     {context}
@@ -66,7 +67,7 @@ const basicAcademicSearchResponsePrompt = `
 const strParser = new StringOutputParser();
 
 const handleStream = async (
-  stream: AsyncGenerator<StreamEvent, any, unknown>,
+  stream: IterableReadableStream<StreamEvent>,
   emitter: eventEmitter,
 ) => {
   for await (const event of stream) {
@@ -114,18 +115,13 @@ const createBasicAcademicSearchRetrieverChain = (llm: BaseChatModel) => {
 
       const res = await searchSearxng(input, {
         language: 'en',
-        engines: [
-          'arxiv',
-          'google scholar',
-          'internetarchivescholar',
-          'pubmed',
-        ],
+        engines: ['arxiv', 'google scholar', 'pubmed'],
       });
 
       const documents = res.results.map(
         (result) =>
           new Document({
-            pageContent: result.content,
+            pageContent: result.content || '',
             metadata: {
               title: result.title,
               url: result.url,
@@ -142,11 +138,15 @@ const createBasicAcademicSearchRetrieverChain = (llm: BaseChatModel) => {
 const createBasicAcademicSearchAnsweringChain = (
   llm: BaseChatModel,
   embeddings: Embeddings,
+  optimizationMode: 'speed' | 'balanced' | 'quality',
 ) => {
   const basicAcademicSearchRetrieverChain =
     createBasicAcademicSearchRetrieverChain(llm);
 
-  const processDocs = async (docs: Document[]) => {
+  const processDocs = async (docs: Document[] | undefined) => {
+    if (!docs || docs.length === 0) {
+      return '';
+    }
     return docs
       .map((_, index) => `${index + 1}. ${docs[index].pageContent}`)
       .join('\n');
@@ -167,26 +167,32 @@ const createBasicAcademicSearchAnsweringChain = (
       (doc) => doc.pageContent && doc.pageContent.length > 0,
     );
 
-    const [docEmbeddings, queryEmbedding] = await Promise.all([
-      embeddings.embedDocuments(docsWithContent.map((doc) => doc.pageContent)),
-      embeddings.embedQuery(query),
-    ]);
+    if (optimizationMode === 'speed') {
+      return docsWithContent.slice(0, 15);
+    } else if (optimizationMode === 'balanced') {
+      const [docEmbeddings, queryEmbedding] = await Promise.all([
+        embeddings.embedDocuments(
+          docsWithContent.map((doc) => doc.pageContent),
+        ),
+        embeddings.embedQuery(query),
+      ]);
 
-    const similarity = docEmbeddings.map((docEmbedding, i) => {
-      const sim = computeSimilarity(queryEmbedding, docEmbedding);
+      const similarity = docEmbeddings.map((docEmbedding, i) => {
+        const sim = computeSimilarity(queryEmbedding, docEmbedding);
 
-      return {
-        index: i,
-        similarity: sim,
-      };
-    });
+        return {
+          index: i,
+          similarity: sim,
+        };
+      });
 
-    const sortedDocs = similarity
-      .sort((a, b) => b.similarity - a.similarity)
-      .slice(0, 15)
-      .map((sim) => docsWithContent[sim.index]);
+      const sortedDocs = similarity
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(0, 15)
+        .map((sim) => docsWithContent[sim.index]);
 
-    return sortedDocs;
+      return sortedDocs;
+    }
   };
 
   return RunnableSequence.from([
@@ -223,12 +229,17 @@ const basicAcademicSearch = (
   history: BaseMessage[],
   llm: BaseChatModel,
   embeddings: Embeddings,
+  optimizationMode: 'speed' | 'balanced' | 'quality',
 ) => {
   const emitter = new eventEmitter();
 
   try {
     const basicAcademicSearchAnsweringChain =
-      createBasicAcademicSearchAnsweringChain(llm, embeddings);
+      createBasicAcademicSearchAnsweringChain(
+        llm,
+        embeddings,
+        optimizationMode,
+      );
 
     const stream = basicAcademicSearchAnsweringChain.streamEvents(
       {
@@ -257,8 +268,15 @@ const handleAcademicSearch = (
   history: BaseMessage[],
   llm: BaseChatModel,
   embeddings: Embeddings,
+  optimizationMode: 'speed' | 'balanced' | 'quality',
 ) => {
-  const emitter = basicAcademicSearch(message, history, llm, embeddings);
+  const emitter = basicAcademicSearch(
+    message,
+    history,
+    llm,
+    embeddings,
+    optimizationMode,
+  );
   return emitter;
 };
 
